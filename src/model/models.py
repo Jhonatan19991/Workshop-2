@@ -1,8 +1,8 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, TEXT
 from sqlalchemy.orm import declarative_base, relationship
 
 BASE = declarative_base()
-MAX_STRING_SIZE = 100
+MAX_STRING_SIZE = 256
 
 class TheGrammyAwards(BASE):
     __tablename__ = 'TheGrammyAwards'
@@ -12,10 +12,10 @@ class TheGrammyAwards(BASE):
     published_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, nullable=False)
     category = Column(String(MAX_STRING_SIZE), nullable=False)
-    nominee = Column(String(MAX_STRING_SIZE), nullable=False)
-    artist = Column(String(MAX_STRING_SIZE), nullable=False)
-    workers = Column(String(MAX_STRING_SIZE), nullable=False)
-    img = Column(String(MAX_STRING_SIZE), nullable=False)
+    nominee = Column(String(MAX_STRING_SIZE), nullable=True)
+    artist = Column(String(MAX_STRING_SIZE), nullable=True)
+    workers = Column(TEXT, nullable=True)
+    img = Column(TEXT, nullable=True)
     winner = Column(Boolean, nullable=False)
     
     def __str__ (self):

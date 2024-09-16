@@ -18,6 +18,7 @@ def getconnection():
         if not database_exists(url):
             create_database(url)
             print(f"Database created succesfully {db}")
+
         engine = create_engine(url)
         print(f'Conected successfully to database {db}!')
         return engine
