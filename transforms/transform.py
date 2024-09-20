@@ -11,6 +11,17 @@ work_dir = os.getenv('WORK_DIR')
 
 sys.path.append(work_dir)
 
+import re
+
+def extract_artist(workers: str, artist: str) -> str:
+    if not artist:
+        if workers:
+            match = re.search(r"\((.*?)\)", workers)  # Corrección de la expresión regular
+            if match:
+                return match.group(1)
+        return None
+    return artist
+
 
 class DataTransformGrammys:
 
@@ -22,22 +33,22 @@ class DataTransformGrammys:
     
     def insert_id(self) -> None:
         self.df['id'] = range(1,len(self.df)+1)
-    
+
+    def update_and_clear_artist(self):
+        mask = self.df['artist'].str.contains('songwriter', case=False, na=False)
+        
+        # Copiar el contenido de 'artist' a 'workers' y borrar 'artist'
+        self.df.loc[mask, 'workers'] = self.df.loc[mask, 'artist']
+        self.df.loc[mask, 'artist'] = None
+
+        
     def set_winners(self) -> None:
         self.df['winner'] = self.df.groupby(['year', 'category']).cumcount() == 0
-    
-    @staticmethod
-    def extract_artist(workers, _=None):
-        if workers is None:
-            return None
         
-        match = re.search(r'\((.*?)\)', workers)
-        if match:
-            return match.group(1)
-        return ""
-    
     def set_artist_song_of_the_year(self) -> None:
-        self.df.loc[self.df['category'] == 'Song Of The Year', 'artist'] = self.df['workers'].apply(self.extract_artist)
+        self.df['workers'] = self.df['workers'].astype(str)
+
+        self.df['artist'] = self.df.apply(lambda row: extract_artist(row['workers'], row['artist']), axis=1)
 
     
     def set_img(self)->None:
@@ -45,7 +56,14 @@ class DataTransformGrammys:
     
     def various_artist(self) ->None:
         self.df['artist'] = self.df['artist'].str.replace(' featuring ', ';', regex=False)
+        self.df['artist'] = self.df['artist'].str.replace(' Featuring ', ';', regex=False)
+
         self.df['artist'] = self.df['artist'].str.replace(', ', ';', regex=False)
+        self.df['artist'] = self.df['artist'].str.replace(' ,', ';', regex=False)
+        self.df['artist'] = self.df['artist'].str.replace(' , ', ';', regex=False)
+
+        self.df['artist'] = self.df['artist'].str.replace(' & ', ';', regex=False)
+        self.df['artist'] = self.df['artist'].str.replace(' With ', ';', regex=False)
 
 class DataTransformSpotify:
 

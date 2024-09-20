@@ -145,10 +145,22 @@ def merge_df(**kwargs):
     df_spotify = pd.DataFrame(data_spotify["data"])
 
     # Perform the merge
-    df_merged = df_spotify.merge(df_grammy, how='left', left_on=['track_name', 'artists'], right_on=['nominee', 'artist'])
+    df_spotify['track_name'] = df_spotify['track_name'].str.lower()
+    df_grammy['nominee'] = df_grammy['nominee'].str.lower()
+
+    df_merged = df_spotify.merge(df_grammy, how='left', left_on='track_name', right_on='nominee')
 
     df_merged['nominee_times'] = df_merged['nominee_times'].fillna(0).astype(int)
     df_merged['wins'] = df_merged['wins'].fillna(0).astype(int)
+
+    dfs = df_merged.groupby('track_name')['popularity'].idxmax()
+
+    max_popularities = df_merged.loc[dfs].set_index('track_name')['popularity']
+
+    mask = df_merged['popularity'] < df_merged['track_name'].map(max_popularities)
+
+    df_merged.loc[mask, ['nominee_times', 'wins', 'img']] = 0, 0, None
+    
     log.info(f"Merged DataFrame shape: {df_merged.shape}")
     log.info(f"Merged DataFrame columns: {df_merged.columns}")
 
