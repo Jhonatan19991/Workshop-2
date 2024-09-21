@@ -63,12 +63,12 @@ def transform_grammy(**kwargs):
 
     df = file.df.copy()
 
-    df_grouped = df.groupby(['nominee', 'artist', 'img']).agg(
+    df_grouped = df.groupby(['nominee', 'artist','year', 'img']).agg(
         nominee_times=('nominee', 'size'),
         wins=('winner', 'sum')
     ).reset_index()
 
-    df_grouped.columns = ['nominee', 'artist', 'img', 'nominee_times', 'wins']
+    df_grouped.columns = ['nominee', 'artist', 'year','img', 'nominee_times', 'wins']
 
     log.info('Aggregated DataFrame created')
 
@@ -197,8 +197,9 @@ def load_merge(**kwargs):
         log.error(f"Error creating table: {e}")
         return
 
-    # Cargar los datos en la tabla
     try:
+        df.drop_duplicates(subset='id', inplace=True)
+        log.info(df.shape)
         df.to_sql('SongsStatitics', con=engine, if_exists='append', index=False)
         log.info('Data loaded successfully')
         return df.to_json(orient='records')
@@ -211,7 +212,7 @@ def store(**kwargs):
     ti = kwargs['ti']
     json_df = ti.xcom_pull(task_ids="load")
     if json_df is None:
-        log.error("No data found in XCom for 'merge'")
+        log.error("No data found in XCom for 'load'")
         return
 
     df = pd.DataFrame(json.loads(json_df))

@@ -47,7 +47,7 @@ class SongsStatitics(BASE):
     tempo = Column(Float, nullable=True)
     time_signature = Column(Float, nullable=True)
     track_genre = Column(String, nullable=True)
-    
+    year = Column(Integer, nullable=True)
     img = Column(TEXT, nullable=True)
     nominee_times = Column(Integer, nullable=False)
     wins = Column(Integer, nullable=False)
