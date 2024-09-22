@@ -1,11 +1,9 @@
 import pandas as pd
 import sys
 import os
-import requests
-import time
 import re
-from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+from .http_operations import fetch_artist_image
 
 load_dotenv()
 work_dir = os.getenv('WORK_DIR')
@@ -13,86 +11,91 @@ work_dir = os.getenv('WORK_DIR')
 
 sys.path.append(work_dir)
 
+import re
+
+def extract_artist(workers: str, artist: str) -> str:
+    """Extracts the artist's name from the 'workers' string if 'artist' is not defined.
+    If an artist is found in parentheses, that name is returned.
+    """
+    if not artist:
+        if workers:
+            match = re.search(r"\((.*?)\)", workers)  # Corrección de la expresión regular
+            if match:
+                return match.group(1)
+        return None
+    return artist
+
+
 class DataTransformGrammys:
 
     def __init__(self, file) -> None:
+        """Initializes the class by loading a CSV file into a DataFrame."""
         self.df = pd.read_csv(file, sep=',', encoding='utf-8')
     
+    def set_df(self, df) ->None:
+        """Sets a new DataFrame in the instance."""
+        self.df = df
+    
     def insert_id(self) -> None:
+        """Adds an 'id' column to the DataFrame with a range of sequential numbers."""
         self.df['id'] = range(1,len(self.df)+1)
-    
+
+    def update_and_clear_artist(self):
+        """Updates the 'workers' column for artists containing 'songwriter' and clears the 'artist' column."""
+        mask = self.df['artist'].str.contains('songwriter', case=False, na=False)
+        
+        # Copiar el contenido de 'artist' a 'workers' y borrar 'artist'
+        self.df.loc[mask, 'workers'] = self.df.loc[mask, 'artist']
+        self.df.loc[mask, 'artist'] = None
+
+        
     def set_winners(self) -> None:
+        """Marks the winners in the DataFrame, assigning True to the first artist in each year and category group."""
         self.df['winner'] = self.df.groupby(['year', 'category']).cumcount() == 0
-    
-    def extract_artist(workers):
-        if workers is None:
-            return None
         
-        match = re.search(r'\((.*?)\)', workers)
-        if match:
-            return match.group(1)
-        return ""
-    
     def set_artist_song_of_the_year(self) -> None:
-        self.df.loc[self.df['category'] == 'Song Of The Year', 'artist'] = self.df['workers'].apply(self.extract_artist)
+        """Updates the 'artist' column using the extract_artist function to handle 'workers' cases."""
+        self.df['workers'] = self.df['workers'].astype(str)
 
-    
-    def img(artist, csv_file='../data/img.csv'):
-        if artist == None:
-            return None
+        self.df['artist'] = self.df.apply(lambda row: extract_artist(row['workers'], row['artist']), axis=1)
 
-        if os.path.exists(csv_file):
-            img_df = pd.read_csv(csv_file)
-
-            if artist in img_df['artist'].values:
-                return img_df[img_df['artist'] == artist]['image_url'].values[0]
-
-        artist = artist.replace(' ','%20')
-        resp = requests.get(f'https://www.last.fm/music/{artist}')
-        try:
-            time.sleep(1)
-            soup = BeautifulSoup(resp.content, 'html.parser')
-            car = soup.find(class_ = "section-with-separator buffer-standard visible-xs")
-            rows = car.find(class_= 'image-list-item')
-            img = rows.img['src']
-
-            new_data = pd.DataFrame({'artist':[artist.replace('%20',' ')],'image_url':[img]})
-            if os.path.exists(csv_file):
-                new_data.to_csv(csv_file, mode='a', header=False, index=False)
-            else:
-                new_data.to_csv(csv_file, index=False)
-        
-            return img
-        except:
-            new_data = pd.DataFrame({'artist':[artist.replace('%20',' ')],'image_url':[None]})
-            if os.path.exists(csv_file):
-                new_data.to_csv(csv_file, mode='a', header=False, index=False)
-            else:
-                new_data.to_csv(csv_file, index=False)
-            return None
     
     def set_img(self)->None:
-        self.df['img'] = self.df['artist'].apply(lambda x: self.img(x))
+        """Adds an 'img' column to the DataFrame, using an external function to fetch the artist's image."""
+        self.df['img'] = self.df['artist'].apply(lambda x: fetch_artist_image(x))
     
     def various_artist(self) ->None:
+        """Normalizes artist names with multiple collaborations by replacing separators with ';'."""
         self.df['artist'] = self.df['artist'].str.replace(' featuring ', ';', regex=False)
+        self.df['artist'] = self.df['artist'].str.replace(' Featuring ', ';', regex=False)
+
         self.df['artist'] = self.df['artist'].str.replace(', ', ';', regex=False)
+        self.df['artist'] = self.df['artist'].str.replace(' ,', ';', regex=False)
+        self.df['artist'] = self.df['artist'].str.replace(' , ', ';', regex=False)
+
+        self.df['artist'] = self.df['artist'].str.replace(' & ', ';', regex=False)
+        self.df['artist'] = self.df['artist'].str.replace(' With ', ';', regex=False)
 
 class DataTransformSpotify:
 
-    def __init__(self, file) -> None:
-        self.df = pd.read_csv(file, sep=',', encoding='utf-8')
+    def __init__(self, df) -> None:
+        """Initializes the class with an existing DataFrame."""
+        self.df = df
     
     def drop_na(self) -> None:
+        """Removes all rows with null values from the DataFrame."""
         self.df.dropna()
     
     def drop_duplicates(self) -> None:
+        """Removes duplicates in the DataFrame based on the 'track_id' column."""
         self.df.drop_duplicates(subset='track_id', inplace=True)
 
-        df_max_popularity_per_album = df.loc[df.groupby(['track_name', 'artists'])['popularity'].idxmax()]
-        df = df_max_popularity_per_album.loc[df_max_popularity_per_album.groupby(['track_name', 'artists'])['popularity'].idxmax()]
+        df_max_popularity_per_album = self.df.loc[self.df.groupby(['track_name', 'artists'])['popularity'].idxmax()]
+        self.df = df_max_popularity_per_album.loc[df_max_popularity_per_album.groupby(['track_name', 'artists'])['popularity'].idxmax()]
 
+    @staticmethod
     def map_genre(genre):
+        """Maps musical genres to broader categories for simplified analysis."""
         genre_map = {
             'Rock': ['ska','alt-rock', 'hard-rock', 'punk-rock', 'psych-rock', 'rock', 'rock-n-roll', 'grunge', 'goth', 'rockabilly', 'guitar','garage','j-rock'],
             'Pop': ['pop', 'indie-pop', 'synth-pop', 'j-pop', 'k-pop', 'cantopop', 'mandopop', 'power-pop', 'pop-film'],
@@ -119,4 +122,5 @@ class DataTransformSpotify:
         return 'Other'
 
     def map_genre_df(self):
+        """Applies the map_genre function to the 'track_genre' column of the DataFrame to classify genres."""
         self.df['track_genre'] = self.df['track_genre'].apply(self.map_genre)
