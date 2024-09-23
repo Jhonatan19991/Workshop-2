@@ -95,7 +95,7 @@ The project directory is structured as follows:
 
 ## Getting Started
 ### Workflow
-![image](https://github.com/Jhonatan19991/images/blob/main/assets/workflow2.png)
+![image](https://github.com/Jhonatan19991/images/blob/main/assets/Workflow2.png)
 ### Prerequisites
 
 1. **Python** 🐍
@@ -358,6 +358,7 @@ Now you should be able to monitor and manage your Airflow tasks directly from th
 
 If everything went well, the processed data should now be saved in your local PostgreSQL, and all the information should also be stored in a CSV file in your Drive. You can check that everything is fine if, on the Apache Airflow page, the process completed in the following manner
 
+![image](https://github.com/Jhonatan19991/images/blob/main/assets/airflow.png)
 
 ## DashBoard
 9. Now Open PowerBI
