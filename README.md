@@ -361,31 +361,35 @@ If everything went well, the processed data should now be saved in your local Po
 ![image](https://github.com/Jhonatan19991/images/blob/main/assets/airflow.png)
 
 ## DashBoard
-9. Now Open PowerBI
+ Now Open PowerBI
     
-   9.1 start a new dashboard
+ - start a new dashboard
+   
    
 ![image](https://github.com/Jhonatan19991/images/blob/main/assets/power1.png)
 
    
-   9.2 now select this opion and go to the option more...
+  - now select this opion and go to the option more...
 
    ![image](https://github.com/Jhonatan19991/images/blob/main/assets/powe2.png)
 
    
-   9.3 now select you data base type, in my case is PostgresSQL
+  - now select you data base type, in my case is PostgresSQL
 
    ![image](https://github.com/Jhonatan19991/images/blob/main/assets/power3.png)
 
    
-   9.4 put the information of your database
+   - put the information of your database
 
    ![image](https://github.com/Jhonatan19991/images/blob/main/assets/power4.png)
 
    
-   9.5 and now select the tables you want import to PowerBI
+   - and now select the tables you want import to PowerBI
 
-   ![image](https://github.com/Jhonatan19991/images/blob/main/assets/power5.png)
+   ![image](https://github.com/Jhonatan19991/images/blob/main/assets/power6.png)
 
 
+## Thank You for Visiting My Repository!
+
+Thank you for exploring my ETL - Workshop-02 project, which delves into Spotify and Grammy Awards data processing. I hope the provided tools, workflows, and datasets have been helpful and insightful for your own data projects. Should you have any questions, suggestions, or feedback, feel free to reach out.
 
